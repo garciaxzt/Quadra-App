@@ -37,9 +37,12 @@ st.markdown(
     [data-testid="stFileUploader"] { padding:24px; border:1px dashed #aeb8ab; border-radius:18px; background:white; box-shadow:0 20px 55px rgba(39,52,35,.07); }
     [data-testid="stFileUploaderDropzone"] { background:#fbfcf9; border-color:#c9d0c6; }
     div[data-testid="stRadio"] > label, div[data-testid="stToggle"] label { font-weight:700; color:var(--ink); }
-    div[role="radiogroup"] { gap:8px; }
-    div[role="radiogroup"] label { padding:8px 14px; background:white; border:1px solid #d9ded8; border-radius:9px; }
+    div[role="radiogroup"] { display:flex !important; flex-wrap:wrap !important; gap:8px; }
+    div[role="radiogroup"] label { min-height:42px; padding:8px 14px; background:white; border:1px solid #d9ded8; border-radius:9px; }
+    div[role="radiogroup"] label p,
+    div[role="radiogroup"] label span { color:var(--ink) !important; opacity:1 !important; visibility:visible !important; }
     .setting-card { margin-bottom:4px; color:var(--muted); font-size:12px; }
+    .upload-title { margin:18px 0 -42px 26px; position:relative; z-index:2; color:var(--ink); font-size:14px; font-weight:600; pointer-events:none; }
     .result-card { padding:12px; background:white; border:1px solid #d9ded8; border-radius:13px; }
     .metric { color:var(--olive); font-size:12px; font-weight:700; }
     .stDownloadButton button, .stButton button { width:100%; min-height:44px; border:0; border-radius:9px; background:var(--ink); color:white; font-weight:700; }
@@ -50,7 +53,17 @@ st.markdown(
     .step b { color:#83a943; font:600 11px 'DM Mono'; }
     .step h3 { margin:10px 0 7px; font-size:17px; }
     .step p { margin:0; color:var(--muted); font-size:12px; line-height:1.55; }
-    @media(max-width:700px){ .safe{font-size:0}.safe:after{content:'Processamento seguro';font-size:11px}.hero{padding-top:45px}.hero h1{letter-spacing:-3px}.steps{grid-template-columns:1fr}.step{border-right:0;border-bottom:1px solid #d9ded8;padding:22px 8px} }
+    @media(max-width:700px){
+      .block-container{padding-left:16px;padding-right:16px}
+      .safe{font-size:0}.safe:after{content:'Processamento seguro';font-size:11px}
+      .hero{padding:38px 0 28px}.hero h1{letter-spacing:-3px}
+      div[role="radiogroup"]{flex-direction:column !important;align-items:stretch !important}
+      div[role="radiogroup"] label{display:flex !important;width:100% !important;min-height:46px;align-items:center}
+      div[role="radiogroup"] label p{display:block !important;white-space:normal !important;font-size:14px !important}
+      [data-testid="stFileUploader"]{padding:24px 16px 16px}
+      .upload-title{margin-left:18px}
+      .steps{grid-template-columns:1fr}.step{border-right:0;border-bottom:1px solid #d9ded8;padding:22px 8px}
+    }
     </style>
     <div class="brandbar">
       <div class="brand"><span class="mark">Q</span>quadra</div>
@@ -81,11 +94,13 @@ with background:
         help="Usa inteligência artificial. A primeira execução pode demorar um pouco mais.",
     )
 
+st.markdown('<div class="upload-title">Solte suas imagens aqui</div>', unsafe_allow_html=True)
 uploaded_files = st.file_uploader(
-    "Solte suas imagens aqui",
+    "Enviar imagens",
     type=["jpg", "jpeg", "png", "webp"],
     accept_multiple_files=True,
     help="Selecione até 20 imagens.",
+    label_visibility="collapsed",
 )
 
 if len(uploaded_files) > 20:
