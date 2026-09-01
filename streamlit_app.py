@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+import html
 from io import BytesIO
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
@@ -8,6 +10,26 @@ import streamlit as st
 
 from image_processing import process_image
 from video_processing import process_video
+
+
+def image_download_link(data: bytes, filename: str) -> None:
+    """Renderiza um download que celulares reconhecem como imagem real."""
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        mime_type = "image/png"
+        extension = ".png"
+    else:
+        mime_type = "image/jpeg"
+        extension = ".jpg"
+
+    final_name = f"{Path(filename).stem}{extension}"
+    safe_name = html.escape(final_name, quote=True)
+    encoded = base64.b64encode(data).decode("ascii")
+    st.markdown(
+        f'<a class="image-download" '
+        f'href="data:{mime_type};base64,{encoded}" '
+        f'type="{mime_type}" download="{safe_name}">Baixar imagem</a>',
+        unsafe_allow_html=True,
+    )
 
 
 st.set_page_config(page_title="Quadra — imagens e vídeos", page_icon="Q", layout="wide")
@@ -46,6 +68,8 @@ st.markdown(
     .stDownloadButton button, .stButton button { width:100%; min-height:44px; border:1px solid #52525b; border-radius:9px; background:#18181b; color:white; font-weight:700; }
     .stDownloadButton button, .stButton button { box-shadow:4px 4px 0 var(--purple); }
     .stDownloadButton button:hover, .stButton button:hover { background:var(--purple-dark); color:white; border:0; }
+    .image-download { display:flex; width:100%; min-height:44px; align-items:center; justify-content:center; box-sizing:border-box; margin:8px 0 14px; border:1px solid #52525b; border-radius:9px; background:#18181b; color:white !important; font-weight:700; text-decoration:none !important; box-shadow:4px 4px 0 var(--purple); }
+    .image-download:hover { background:var(--purple-dark); color:white !important; }
     .video-note { margin:8px 0 15px; padding:12px 14px; border-left:4px solid var(--purple); border-radius:8px; background:#21152f; color:#ddd6fe; font-size:13px; }
     @media(max-width:700px){
       .block-container{padding-left:16px;padding-right:16px}.safe{font-size:0}.safe:after{content:'Processamento seguro';font-size:11px}
@@ -115,7 +139,7 @@ def image_tab() -> None:
             st.image(item["data"], use_container_width=True)
             width, height = item["dimensions"]
             st.markdown(f"**{item['name']}**  \n<span class='metric'>{item['before']/1048576:.2f} MB → {len(item['data'])/1048576:.2f} MB · {width}×{height}px</span>", unsafe_allow_html=True)
-            st.download_button("Baixar imagem", item["data"], item["filename"], "image/jpeg", key=f"image-download-{index}", use_container_width=True)
+            image_download_link(item["data"], item["filename"])
 
 
 def video_tab() -> None:
