@@ -26,17 +26,11 @@ def image_download_link(data: bytes, filename: str) -> None:
     encoded = base64.b64encode(data).decode("ascii")
     data_url = f"data:{mime_type};base64,{encoded}"
     st.markdown(
-        f'<a class="image-download image-share" href="{data_url}" '
-        f'type="{mime_type}" download="{safe_name}" '
-        f'onclick="const a=this; if(navigator.share){{event.preventDefault(); '
-        f'fetch(a.href).then(r=>r.blob()).then(b=>{{const file=new File([b], '
-        f'\'{safe_name}\',{{type:\'{mime_type}\'}}); '
-        f'if(navigator.canShare && navigator.canShare({{files:[file]}})) '
-        f'return navigator.share({{files:[file],title:\'{safe_name}\'}}; '
-        f'window.open(a.href,\'_blank\');}}).catch(()=>window.open(a.href,\'_blank\'));}}">'
-        f'Salvar ou compartilhar</a>'
+        f'<a class="image-download image-open-primary" href="{data_url}" '
+        f'type="{mime_type}" target="_blank" rel="noopener">Abrir imagem no iPhone</a>'
+        f'<div class="ios-save-note">No iPhone: toque e segure a imagem aberta e escolha <b>Salvar em Fotos</b>.</div>'
         f'<a class="image-open" href="{data_url}" type="{mime_type}" '
-        f'target="_blank" rel="noopener">Abrir imagem</a>',
+        f'download="{safe_name}">Baixar arquivo (.jpg/.png)</a>',
         unsafe_allow_html=True,
     )
 
@@ -79,6 +73,7 @@ st.markdown(
     .stDownloadButton button:hover, .stButton button:hover { background:var(--purple-dark); color:white; border:0; }
     .image-download { display:flex; width:100%; min-height:44px; align-items:center; justify-content:center; box-sizing:border-box; margin:8px 0 14px; border:1px solid #52525b; border-radius:9px; background:#18181b; color:white !important; font-weight:700; text-decoration:none !important; box-shadow:4px 4px 0 var(--purple); }
     .image-download:hover { background:var(--purple-dark); color:white !important; }
+    .ios-save-note { margin:-3px 4px 10px; color:#d4d4d8; font-size:11px; line-height:1.4; text-align:center; }
     .image-open { display:block; margin:-5px 0 16px; color:#c4b5fd !important; font-size:12px; font-weight:700; text-align:center; }
     .video-note { margin:8px 0 15px; padding:12px 14px; border-left:4px solid var(--purple); border-radius:8px; background:#21152f; color:#ddd6fe; font-size:13px; }
     @media(max-width:700px){
