@@ -13,7 +13,7 @@ from video_processing import process_video
 
 
 def image_download_link(data: bytes, filename: str) -> None:
-    """Renderiza um download que celulares reconhecem como imagem real."""
+    """Oferece compartilhamento nativo no iOS e fallback como imagem real."""
     if data.startswith(b"\x89PNG\r\n\x1a\n"):
         mime_type = "image/png"
         extension = ".png"
@@ -24,10 +24,19 @@ def image_download_link(data: bytes, filename: str) -> None:
     final_name = f"{Path(filename).stem}{extension}"
     safe_name = html.escape(final_name, quote=True)
     encoded = base64.b64encode(data).decode("ascii")
+    data_url = f"data:{mime_type};base64,{encoded}"
     st.markdown(
-        f'<a class="image-download" '
-        f'href="data:{mime_type};base64,{encoded}" '
-        f'type="{mime_type}" download="{safe_name}">Baixar imagem</a>',
+        f'<a class="image-download image-share" href="{data_url}" '
+        f'type="{mime_type}" download="{safe_name}" '
+        f'onclick="const a=this; if(navigator.share){{event.preventDefault(); '
+        f'fetch(a.href).then(r=>r.blob()).then(b=>{{const file=new File([b], '
+        f'\'{safe_name}\',{{type:\'{mime_type}\'}}); '
+        f'if(navigator.canShare && navigator.canShare({{files:[file]}})) '
+        f'return navigator.share({{files:[file],title:\'{safe_name}\'}}; '
+        f'window.open(a.href,\'_blank\');}}).catch(()=>window.open(a.href,\'_blank\'));}}">'
+        f'Salvar ou compartilhar</a>'
+        f'<a class="image-open" href="{data_url}" type="{mime_type}" '
+        f'target="_blank" rel="noopener">Abrir imagem</a>',
         unsafe_allow_html=True,
     )
 
@@ -70,6 +79,7 @@ st.markdown(
     .stDownloadButton button:hover, .stButton button:hover { background:var(--purple-dark); color:white; border:0; }
     .image-download { display:flex; width:100%; min-height:44px; align-items:center; justify-content:center; box-sizing:border-box; margin:8px 0 14px; border:1px solid #52525b; border-radius:9px; background:#18181b; color:white !important; font-weight:700; text-decoration:none !important; box-shadow:4px 4px 0 var(--purple); }
     .image-download:hover { background:var(--purple-dark); color:white !important; }
+    .image-open { display:block; margin:-5px 0 16px; color:#c4b5fd !important; font-size:12px; font-weight:700; text-align:center; }
     .video-note { margin:8px 0 15px; padding:12px 14px; border-left:4px solid var(--purple); border-radius:8px; background:#21152f; color:#ddd6fe; font-size:13px; }
     @media(max-width:700px){
       .block-container{padding-left:16px;padding-right:16px}.safe{font-size:0}.safe:after{content:'Processamento seguro';font-size:11px}
@@ -90,6 +100,9 @@ st.markdown(
 
 
 def image_tab() -> None:
+    if "images_uploader_version" not in st.session_state:
+        st.session_state.images_uploader_version = 0
+
     settings, background = st.columns([1.25, 1])
     with settings:
         st.markdown('<div class="setting-card">FORMATO DA IMAGEM</div>', unsafe_allow_html=True)
@@ -99,7 +112,13 @@ def image_tab() -> None:
         white_background = st.toggle("Remover fundo e aplicar branco 100%", help="A primeira execução pode demorar um pouco mais.")
 
     st.markdown('<div class="upload-title">Solte suas imagens aqui</div>', unsafe_allow_html=True)
-    uploaded_files = st.file_uploader("Enviar imagens", type=["jpg", "jpeg", "png", "webp"], accept_multiple_files=True, label_visibility="collapsed", key="images")
+    uploader_key = f"images-{st.session_state.images_uploader_version}"
+    uploaded_files = st.file_uploader("Enviar imagens", type=["jpg", "jpeg", "png", "webp"], accept_multiple_files=True, label_visibility="collapsed", key=uploader_key)
+    if uploaded_files and st.button("Limpar tudo", key="clear-all-images", use_container_width=True):
+        st.session_state.images_uploader_version += 1
+        st.session_state.pop("image_signature", None)
+        st.session_state.pop("image_results", None)
+        st.rerun()
     if len(uploaded_files) > 20:
         st.error("Selecione no máximo 20 imagens por vez.")
         uploaded_files = uploaded_files[:20]
