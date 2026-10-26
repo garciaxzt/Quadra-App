@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import lru_cache
 from io import BytesIO
 from typing import Literal
 
@@ -8,6 +9,19 @@ from PIL import Image, ImageOps
 
 MAX_BYTES = 2 * 1024 * 1024
 AspectMode = Literal["square", "original"]
+
+
+@lru_cache(maxsize=1)
+def _background_session():
+    """Usa o modelo leve para caber na memória do Streamlit Community Cloud."""
+    try:
+        from rembg import new_session
+    except ImportError as exc:
+        raise RuntimeError(
+            "A remoção de fundo não está instalada. Instale as dependências do requirements.txt."
+        ) from exc
+
+    return new_session("u2netp")
 
 
 def _remove_background(image: Image.Image) -> Image.Image:
@@ -20,7 +34,7 @@ def _remove_background(image: Image.Image) -> Image.Image:
 
     source = BytesIO()
     image.save(source, format="PNG")
-    result = remove(source.getvalue())
+    result = remove(source.getvalue(), session=_background_session())
     return Image.open(BytesIO(result)).convert("RGBA")
 
 
